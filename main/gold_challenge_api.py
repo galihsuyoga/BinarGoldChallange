@@ -5,11 +5,14 @@ import os
 # blueprint for managing route to several pythonfile, jsonify to return json value, render_template to render html page
 from flask import request, Blueprint, jsonify
 # flasgger for api documentation
-from fungsidb import query_db, get_db
 from flasgger import swag_from
+from main.model.text_processing import Abusive, KamusAlay, TextFileTweetLog
 # pandas for data manipulation
+from main.cleanser import bersihkan_tweet
 import pandas as pd
 import re
+
+from main.model import db
 
 # initializing front root for project asset and template
 gold = Blueprint('gold', __name__, template_folder='templates', static_folder='assets')
@@ -30,21 +33,20 @@ def gold_hello_swagger():
 @gold.route('/gold-text-processing', methods=['POST'])
 def gold_text_processing():
     text = request.form.get('text')
-
     json_response = {
         'status_code': 200,
-        'description': "Text yang sudah diproses",
-        'data': re.sub(r'[^a-zA-Z0-9]', ' ', text)
+        'raw_text': text,
+        'cleaned_text': bersihkan_tweet(text)
     }
     return jsonify(json_response)
 
 
 # api get data from api through a csv file
 @swag_from("docs/text_processing_from_file.yml", methods=['POST'])
-@gold.route('/gold-text-processing_from_file', methods=['POST'])
+@gold.route('/gold-text-processing-from-file', methods=['POST'])
 def gold_text_processing_from_file():
 
-    description = "text sudah diproses"
+    description = "text sukses diproses"
     http_code = 200
     """get the file"""
     file = request.files.get('text')
@@ -58,15 +60,29 @@ def gold_text_processing_from_file():
         http_code = 400
     else:
         """if csv"""
-        print(file)
         """masukkan csv ke panda dataframe variabel data_frame"""
-        data_frame = pd.read_csv(file, encoding='latin-1')
 
-        # print(data_frame.to_sql())
+        data_frame = pd.read_csv(file.stream, encoding='latin-1')
+        # for data in data_frame:
+        # print(data_frame['Abusive'])
+        # data_frame.to_sql('kamus_alay', con=db.engine, if_exists='replace', index_label='id')
+        # print(data_frame)
+        array_text = []
+        for index, row in data_frame.iterrows():
+            # print(row['Tweet'])
+            text = str(row['Tweet'])
+            existing = TextFileTweetLog.query.filter(TextFileTweetLog.tweet == text).first()
+            print(list[row])
+            # if existing is None:
+            #     new_Tweet = TextFileTweetLog(tweet=row['Tweet'])
+            #     new_Tweet.save()'
+            # print(text)
+            # print()
+            # array_text.append(bersihkan_tweet(text))
 
     json_response = {
         'status_code': http_code,
         'description': description,
-        'data': "Invalid input file"
+        'data': array_text
     }
     return jsonify(json_response)
