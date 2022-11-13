@@ -15,17 +15,44 @@ emoticons_sad = [
     ':-[', ':-<', '=\\', '=/', '>:(', ':(', '>.<', ":'-(", ":'(", ':\\', ':-c',
     ':c', ':{', '>:\\', ';('
     ]
+emoticons = emoticons_happy + emoticons_sad
+# adding text need to remove
+emoticons.append("http")
+emoticons.append("url")
 
-def bersihkan_tweet(tweet):
+
+def bersihkan_tweet_dari_text(tweet):
+
+    temp = clean_text(tweet)
+
+    #unjoin karakter untuk nantinya dijoin agar single spasi
+    temparray = temp.split()
+    filtered_tweet = []
+    for w in temparray:
+        if w not in emoticons and w.upper() not in emoticons:
+            # cek pake filter db
+            filtered_tweet.append(cek_alay_dan_abuse_db(w))
+    temp = " ".join(word for word in filtered_tweet)
+    return temp
+
+
+def bersihkan_tweet_dari_file(tweet, df_alay, df_abusive, full={}):
+    temp = clean_text(tweet)
+    #unjoin karakter untuk nantinya dijoin agar single spasi
+    temparray = temp.split()
+    filtered_tweet = []
+    for w in temparray:
+        if w not in emoticons and w.upper() not in emoticons:
+            # cek pake filter pandas
+            filtered_tweet.append(cek_alay_dan_abuse(w, df_alay=df_alay, df_abuse=df_abusive))
+    temp = " ".join(word for word in filtered_tweet)
+    return temp
+
+
+def clean_text(text):
     # cek apakah string ataukah afloat
-    if type(tweet) == np.float:
+    if type(text) == np.float:
         return ""
-    # emoticons list
-    emoticons = emoticons_happy + emoticons_sad
-    # adding text need to remove
-    emoticons.append("http")
-    emoticons.append("url")
-
     # list dari pattern emoji
     EMOJI_PATTERN = re.compile(
         "["
@@ -52,16 +79,17 @@ def bersihkan_tweet(tweet):
 
     try:
         # sub karakter \n
-        temp = re.sub(f"\\\\n", " ", tweet)
+        temp = re.sub(f"\\\\n", " ", text)
         # ubah ke utf, ganti \\ dengan \ lalu ganti \u dengan \u000 lalu balikan ke unicode_escape
         temp = temp.encode(
-            'unicode_escape').decode('utf-8').replace('\\\\', '\\').replace('\\u', '\\U000').encode('latin-1').decode('unicode-escape')
+            'unicode_escape').decode('utf-8').replace('\\\\', '\\').replace('\\u', '\\U000').encode('latin-1').decode(
+            'unicode-escape')
     except:
         # jika error karena UnicodeDecodeError: 'unicodeescape' codec can't decode byte 0x5c in position 209: \ at end of string
         # split ke kata2
-        array_split = tweet.split()
+        array_split = text.split()
         # hapus kata terakhir dengan harapan tak ada lagi unicodeescape
-        temp = tweet.replace(array_split[-1], " ")
+        temp = text.replace(array_split[-1], " ")
         # sub karakter \n
         temp = re.sub(f"\\\\n", " ", temp)
         # ubah ke utf, ganti \\ dengan \ lalu ganti \u dengan \u000 lalu balikan ke unicode_escape
@@ -72,36 +100,62 @@ def bersihkan_tweet(tweet):
     # merubah patern emoji
     temp = EMOJI_PATTERN.sub(r'', temp)
     # hapus mention @
-    temp = re.sub("@[A-Za-z0-9_]+","", temp)
+    temp = re.sub("@[A-Za-z0-9_]+", "", temp)
     # hapus hashtag
     # temp = re.sub("#[A-Za-z0-9_]+","", temp) kayaknya gak perlu
-    #hapus tanda baca ()!?
+    # hapus tanda baca ()!?
     temp = re.sub('[()!?]', ' ', temp)
     # hapus karakter yang tidak dalam range a-z0-9x (karena emojinya udah jadi bentuk, bukan huruf, emoji bisa tersingkir)
-    temp = re.sub("[^A-Za-z0-9]"," ", temp)
+    temp = re.sub("[^A-Za-z0-9]", " ", temp)
     # lowercase huruf
     temp = temp.lower()
     # # hapus kata duplikasi yang berurutan
     temp = re.sub(r'\b(\w+)( \1\b)+', r'\1', temp)
-    #unjoin karakter untuk nantinya dijoin agar single spasi
-    temparray = temp.split()
-    filtered_tweet = []
-    for w in temparray:
-        if w not in emoticons and w.upper() not in emoticons:
-            filtered_tweet.append(cek_alay_dan_abuse(w))
-    temp = " ".join(word for word in filtered_tweet)
+
     return temp
 
 
-def cek_alay_dan_abuse(w):
-    alay = KamusAlay.query.filter(KamusAlay.word == w).first()
-    if alay:
+def cek_alay_dan_abuse(w, df_abuse, df_alay):
+    #cleansing using pandas
+    alay = df_alay[df_alay['word'].isin([w])]
+
+    if len(alay) > 0:
         # print(alay.Abusive)
-        if Abusive.query.filter(Abusive.word == alay.meaning).first():
+        meaning = list(alay['meaning'])[0]
+        # check if meaning is abusive word
+        abuse = df_abuse[df_abuse['word'].isin([meaning])]
+
+        if len(abuse) > 0:
+            # if abuse
             return "X"*len(w)
-        return alay.meaning
-    else:
-        abusive = Abusive.query.filter(Abusive.word == w).first()
-        if abusive:
+        # if not
+        return meaning
+
+    # if not alay
+    abusive = df_abuse[df_abuse['word'].isin([w])]
+    if len(abusive) > 0:
+        # if abusive
+        return "X" * len(w)
+    return w
+
+
+def cek_alay_dan_abuse_db(w):
+    # cleansing query by db
+    alay = KamusAlay.query.filter(KamusAlay.word == w).first()
+
+    if alay:
+        # check if meaning is abusive word
+        abuse = Abusive.query.filter(Abusive.word == alay.meaning).first()
+
+        if abuse:
+            # if abuse
             return "X" * len(w)
+        # if not
+        return alay.meaning
+
+    # if not alay
+    abusive = Abusive.query.filter(Abusive.word == w).first()
+    if abusive:
+        # if abusive
+        return "X" * len(w)
     return w

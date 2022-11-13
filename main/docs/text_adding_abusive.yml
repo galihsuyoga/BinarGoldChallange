@@ -1,9 +1,9 @@
 tags:
-  - name: Text Processing From Text and CSV File
+  - name: Text Adding Database Alay dan Abusive
 get:
-  description: Text to be process
+  description: Text to be included in alay word and it's kbbi meaning
 parameters:
-  - name: text
+  - name: abuse
     in: formData
     required: true
     type: string
