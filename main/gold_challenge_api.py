@@ -6,7 +6,7 @@ import os
 from flask import request, Blueprint, jsonify
 # flasgger for api documentation
 from flasgger import swag_from
-from main.model.text_processing import Abusive, KamusAlay, TextFileTweetLog
+from main.model.text_processing import Abusive, KamusAlay, TextLog
 # pandas for data manipulation
 from main.cleanser import bersihkan_tweet_dari_file, bersihkan_tweet_dari_text
 from sqlalchemy import or_
@@ -175,4 +175,35 @@ def gold_text_tambah_kata_abusive():
         'description': description,
         'raw': abuse_text
     }
+    return jsonify(json_response)
+
+
+@swag_from("docs/text_get_all_record.yml", methods=['GET', 'POST'])
+@gold.route('/gold-text-ambil-semua-record', methods=['GET', 'POST'])
+def gold_text_ambil_semua_record():
+    description = "All recorded data"
+    if request.method == "POST":
+        query_text = request.form.get('query', '').lower()
+        # print(query_text)
+        description = f"Query kata {query_text}"
+        search_manipulate = "%{}%".format(query_text)
+        record_df = pd.read_sql_query(
+            sql=db.select([TextLog.raw_text, TextLog.clean]).filter(TextLog.raw_text.ilike(search_manipulate)),
+            con=db.engine
+        )
+
+    else:
+        record_df = pd.read_sql_query(
+            sql=db.select([TextLog.raw_text, TextLog.clean]),
+            con=db.engine
+        )
+
+    data = record_df.to_json(orient="records")
+    # print(data)
+    json_response = {
+        'status_code': 200,
+        'description': description,
+        'data': data
+    }
+
     return jsonify(json_response)

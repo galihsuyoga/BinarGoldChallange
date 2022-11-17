@@ -73,16 +73,19 @@ class KamusAlay(db.Model):
             raise
 
 
-class TextFileTweetLog(db.Model):
-    __tablename__ = 'text_file_tweet_log'
+class TextLog(db.Model):
+    __tablename__ = 'text_log'
 
-    tweet = db.Column(db.String(255), primary_key=True, nullable=False, index=True, default="")
+    id = db.Column(db.Integer().with_variant(db.Integer, "sqlite"), primary_key=True, nullable=False, index=True, autoincrement=True)
+    raw_text = db.Column(db.String(255), nullable=False, index=True, default="")
+    clean = db.Column(db.String(255), nullable=False, default="")
 
-    def __init__(self, tweet):
-        self.tweet = tweet
+    def __init__(self, text, clean):
+        self.raw_text = text
+        self.clean = clean
 
     def __repr__(self):
-        return '<TextFileTweetLog %r>' % self.tweet
+        return '<TextFileTweetLog %r>' % self.raw_text
 
     def save(self):
         try:
@@ -92,3 +95,47 @@ class TextFileTweetLog(db.Model):
         except:
             db.session.rollback()
             raise
+
+
+class AlayAbusiveLog(db.Model):
+    __tablename__ = 'alay_abusive_log'
+
+    id = db.Column(db.Integer().with_variant(db.Integer, "sqlite"), nullable=False, autoincrement=True)
+    word = db.Column(db.String(31), primary_key=True, nullable=False, index=True, default="")
+    clean = db.Column(db.String(31), primary_key=True, nullable=False, index=True, default="")
+    foul_type = db.Column(db.String(255), nullable=False, default="")
+    text_log_id = db.Column(db.Integer, nullable=False, index=True, default="")
+
+    __foul_type_abusive = "ABUSE"
+    __foul_type_alay = "ALAY"
+    __foul_type_mixed = "MIXED"
+
+    def __init__(self, word, clean, foul_type, log_id):
+        self.word = word
+        self.clean = clean
+        self.foul_type = foul_type
+        self.text_log_id = log_id
+
+    def __repr__(self):
+        return '<TextFileTweetLog %r>' % self.word
+
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.flush()
+            db.session.commit()
+        except:
+            db.session.rollback()
+            raise
+
+    @classmethod
+    def foul_type_abusive(cls):
+        return cls.__foul_type_abusive
+
+    @classmethod
+    def foul_type_alay(cls):
+        return cls.__foul_type_alay
+
+    @classmethod
+    def foul_type_mixed(cls):
+        return cls.__foul_type_mixed

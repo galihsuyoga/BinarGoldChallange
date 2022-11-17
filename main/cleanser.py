@@ -1,4 +1,6 @@
-from main.model.text_processing import Abusive, KamusAlay
+__author__ = 'GalihSuyoga'
+
+from main.model.text_processing import Abusive, KamusAlay, TextLog, AlayAbusiveLog
 import numpy as np
 import re
 
@@ -22,17 +24,20 @@ emoticons.append("url")
 
 
 def bersihkan_tweet_dari_text(tweet):
-
+    # clean text rawnya
     temp = clean_text(tweet)
-
-    #unjoin karakter untuk nantinya dijoin agar single spasi
+    # unjoin karakter untuk nantinya dijoin agar single spasi
     temparray = temp.split()
     filtered_tweet = []
+    new_text = TextLog(text=tweet, clean=temp)
+    new_text.save()
     for w in temparray:
         if w not in emoticons and w.upper() not in emoticons:
             # cek pake filter db
-            filtered_tweet.append(cek_alay_dan_abuse_db(w))
+            filtered_tweet.append(cek_alay_dan_abuse_db(w=w, text_id=new_text.id))
     temp = " ".join(word for word in filtered_tweet)
+    new_text.clean = temp
+    new_text.save()
     return temp
 
 
@@ -41,11 +46,15 @@ def bersihkan_tweet_dari_file(tweet, df_alay, df_abusive, full={}):
     #unjoin karakter untuk nantinya dijoin agar single spasi
     temparray = temp.split()
     filtered_tweet = []
+    new_text = TextLog(text=tweet, clean=temp)
+    new_text.save()
     for w in temparray:
         if w not in emoticons and w.upper() not in emoticons:
             # cek pake filter pandas
-            filtered_tweet.append(cek_alay_dan_abuse(w, df_alay=df_alay, df_abuse=df_abusive))
+            filtered_tweet.append(cek_alay_dan_abuse(w, df_alay=df_alay, df_abuse=df_abusive, text_id=new_text.id))
     temp = " ".join(word for word in filtered_tweet)
+    new_text.clean = temp
+    new_text.save()
     return temp
 
 
@@ -85,10 +94,11 @@ def clean_text(text):
             'unicode_escape').decode('utf-8').replace('\\\\', '\\').replace('\\u', '\\U000').encode('latin-1').decode(
             'unicode-escape')
     except:
+
         # jika error karena UnicodeDecodeError: 'unicodeescape' codec can't decode byte 0x5c in position 209: \ at end of string
         # split ke kata2
         array_split = text.split()
-        # hapus kata terakhir dengan harapan tak ada lagi unicodeescape
+        # hapus kata atau simbol byte terakhir dengan harapan tak ada lagi unicodeescape
         temp = text.replace(array_split[-1], " ")
         # sub karakter \n
         temp = re.sub(f"\\\\n", " ", temp)
@@ -97,7 +107,7 @@ def clean_text(text):
             'unicode_escape').decode('utf-8').replace('\\\\', '\\').replace('\\u', '\\U000').encode('latin-1').decode(
             'unicode-escape')
 
-    # merubah patern emoji
+    # merubah byte patern emoji jadi emoji
     temp = EMOJI_PATTERN.sub(r'', temp)
     # hapus mention @
     temp = re.sub("@[A-Za-z0-9_]+", "", temp)
@@ -115,7 +125,7 @@ def clean_text(text):
     return temp
 
 
-def cek_alay_dan_abuse(w, df_abuse, df_alay):
+def cek_alay_dan_abuse(w, df_abuse, df_alay, text_id):
     #cleansing using pandas
     alay = df_alay[df_alay['word'].isin([w])]
 
@@ -127,19 +137,22 @@ def cek_alay_dan_abuse(w, df_abuse, df_alay):
 
         if len(abuse) > 0:
             # if abuse
+            alay_abusive_log_save(text=w, clean=meaning, word_type=3, text_id=text_id)
             return "X"*len(w)
         # if not
+        alay_abusive_log_save(text=w, clean=meaning, word_type=2, text_id=text_id)
         return meaning
 
     # if not alay
     abusive = df_abuse[df_abuse['word'].isin([w])]
     if len(abusive) > 0:
         # if abusive
+        alay_abusive_log_save(text=w, clean=w, word_type=1, text_id=text_id)
         return "X" * len(w)
     return w
 
 
-def cek_alay_dan_abuse_db(w):
+def cek_alay_dan_abuse_db(w, text_id):
     # cleansing query by db
     alay = KamusAlay.query.filter(KamusAlay.word == w).first()
 
@@ -148,14 +161,34 @@ def cek_alay_dan_abuse_db(w):
         abuse = Abusive.query.filter(Abusive.word == alay.meaning).first()
 
         if abuse:
-            # if abuse
+            # if abuse saving alay abuse words
+            alay_abusive_log_save(text=w, clean=alay.meaning, word_type=3, text_id=text_id)
             return "X" * len(w)
-        # if not
+        # if not saving alay word
+        alay_abusive_log_save(text=w, clean=alay.meaning, word_type=2, text_id=text_id)
         return alay.meaning
 
     # if not alay
     abusive = Abusive.query.filter(Abusive.word == w).first()
     if abusive:
         # if abusive
+        alay_abusive_log_save(text=w, clean=w, word_type=1, text_id=text_id)
         return "X" * len(w)
+
     return w
+
+
+def alay_abusive_log_save(text, clean, word_type, text_id):
+    if word_type == 1:
+        # abusive
+        word_string = AlayAbusiveLog.foul_type_abusive()
+
+    elif word_type == 2:
+        # alay
+        word_string = AlayAbusiveLog.foul_type_alay()
+    else:
+        # mixed
+        word_string = AlayAbusiveLog.foul_type_mixed()
+
+    new_log = AlayAbusiveLog(word=text, clean=clean, foul_type=word_string, log_id=text_id)
+    new_log.save()
