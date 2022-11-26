@@ -29,20 +29,24 @@ def bersihkan_tweet_dari_text(tweet):
     # unjoin karakter untuk nantinya dijoin agar single spasi
     temparray = temp.split()
     filtered_tweet = []
+    # simpan textnya dulu supaya dapat id lognya
     new_text = TextLog(text=tweet, clean=temp)
     new_text.save()
+    # iterasi kalimat yang sudah displit
     for w in temparray:
         if w not in emoticons and w.upper() not in emoticons:
-            # cek pake filter db
-            filtered_tweet.append(cek_alay_dan_abuse_db(w=w, text_id=new_text.id))
+            # cek pake filter db dan masukkan ke parameter
+            filtered_tweet.append(cek_alay_dan_abuse_db(w=w, text_id=new_text.id, full={}))
     temp = " ".join(word for word in filtered_tweet)
+    # memasukkan nilai bersihnya ke objek yang telah dibuat
     new_text.clean = temp
     new_text.save()
     return temp
 
 
-def bersihkan_tweet_dari_file(tweet, df_alay, df_abusive, full={}):
+def bersihkan_tweet_dari_file(tweet, df_alay, df_abusive, full):
     temp = clean_text(tweet)
+    # print(full)
     #unjoin karakter untuk nantinya dijoin agar single spasi
     temparray = temp.split()
     filtered_tweet = []
@@ -51,7 +55,7 @@ def bersihkan_tweet_dari_file(tweet, df_alay, df_abusive, full={}):
     for w in temparray:
         if w not in emoticons and w.upper() not in emoticons:
             # cek pake filter pandas
-            filtered_tweet.append(cek_alay_dan_abuse(w, df_alay=df_alay, df_abuse=df_abusive, text_id=new_text.id))
+            filtered_tweet.append(cek_alay_dan_abuse(w, df_alay=df_alay, df_abuse=df_abusive, text_id=new_text.id, full=full))
     temp = " ".join(word for word in filtered_tweet)
     new_text.clean = temp
     new_text.save()
@@ -109,10 +113,13 @@ def clean_text(text):
 
     # merubah byte patern emoji jadi emoji
     temp = EMOJI_PATTERN.sub(r'', temp)
+
     # hapus mention @
     temp = re.sub("@[A-Za-z0-9_]+", "", temp)
     # hapus hashtag
     # temp = re.sub("#[A-Za-z0-9_]+","", temp) kayaknya gak perlu
+    # hapus amp
+    temp = re.sub("&amp"," ", temp)
     # hapus tanda baca ()!?
     temp = re.sub('[()!?]', ' ', temp)
     # hapus karakter yang tidak dalam range a-z0-9x (karena emojinya udah jadi bentuk, bukan huruf, emoji bisa tersingkir)
@@ -125,7 +132,7 @@ def clean_text(text):
     return temp
 
 
-def cek_alay_dan_abuse(w, df_abuse, df_alay, text_id):
+def cek_alay_dan_abuse(w, df_abuse, df_alay, text_id, full):
     #cleansing using pandas
     alay = df_alay[df_alay['word'].isin([w])]
 
@@ -137,22 +144,22 @@ def cek_alay_dan_abuse(w, df_abuse, df_alay, text_id):
 
         if len(abuse) > 0:
             # if abuse
-            alay_abusive_log_save(text=w, clean=meaning, word_type=3, text_id=text_id)
+            alay_abusive_log_save(text=w, clean=meaning, word_type=3, text_id=text_id, full=full)
             return "X"*len(w)
         # if not
-        alay_abusive_log_save(text=w, clean=meaning, word_type=2, text_id=text_id)
+        alay_abusive_log_save(text=w, clean=meaning, word_type=2, text_id=text_id, full=full)
         return meaning
 
     # if not alay
     abusive = df_abuse[df_abuse['word'].isin([w])]
     if len(abusive) > 0:
         # if abusive
-        alay_abusive_log_save(text=w, clean=w, word_type=1, text_id=text_id)
+        alay_abusive_log_save(text=w, clean=w, word_type=1, text_id=text_id, full=full)
         return "X" * len(w)
     return w
 
 
-def cek_alay_dan_abuse_db(w, text_id):
+def cek_alay_dan_abuse_db(w, text_id, full) -> str:
     # cleansing query by db
     alay = KamusAlay.query.filter(KamusAlay.word == w).first()
 
@@ -162,26 +169,65 @@ def cek_alay_dan_abuse_db(w, text_id):
 
         if abuse:
             # if abuse saving alay abuse words
-            alay_abusive_log_save(text=w, clean=alay.meaning, word_type=3, text_id=text_id)
+            alay_abusive_log_save(text=w, clean=alay.meaning, word_type=3, text_id=text_id, full=full)
+
             return "X" * len(w)
         # if not saving alay word
-        alay_abusive_log_save(text=w, clean=alay.meaning, word_type=2, text_id=text_id)
+        alay_abusive_log_save(text=w, clean=alay.meaning, word_type=2, text_id=text_id, full=full)
+
         return alay.meaning
 
     # if not alay
     abusive = Abusive.query.filter(Abusive.word == w).first()
     if abusive:
         # if abusive
-        alay_abusive_log_save(text=w, clean=w, word_type=1, text_id=text_id)
-        return "X" * len(w)
+        alay_abusive_log_save(text=w, clean=w, word_type=1, text_id=text_id, full=full)
 
+        return "X" * len(w)
     return w
 
 
-def alay_abusive_log_save(text, clean, word_type, text_id):
+def alay_abusive_log_save(text, clean, word_type, text_id, full):
+
     if word_type == 1:
         # abusive
         word_string = AlayAbusiveLog.foul_type_abusive()
+        # abuse = Abusive.query.filter(Abusive.word == clean).first()
+        # if abuse:
+        #     if 'HS_Individual' in full:
+        #         if int(full['HS_Individual']) >= 1:
+        #             abuse.is_HS_Individual += 1
+        #     if 'HS_Group' in full:
+        #         if int(full['HS_Group']) >= 1:
+        #             abuse.is_HS_Group += 1
+        #     if 'HS_Religion' in full:
+        #         if int(full['HS_Religion']) >= 1:
+        #             abuse.is_HS_Religion += 1
+        #     if 'HS_Race' in full:
+        #         if int(full['HS_Race']) >= 1:
+        #             abuse.is_HS_Race += 1
+        #     if 'HS_Physical' in full:
+        #         if int(full['HS_Physical']) >= 1:
+        #             abuse.is_HS_Physical += 1
+        #     if 'HS_Gender' in full:
+        #         if int(full['HS_Gender']) >= 1:
+        #             abuse.is_HS_Gender += 1
+        #
+        #     if 'HS_Other' in full:
+        #         if int(full['HS_Other']) >= 1:
+        #             abuse.is_HS_Other += 1
+        #     if 'HS_Weak' in full:
+        #         if int(full['HS_Weak']) >= 1:
+        #             abuse.is_HS_Weak += 1
+        #     if 'HS_Moderate' in full:
+        #         if int(full['HS_Moderate']) >= 1:
+        #             abuse.is_HS_Moderate += 1
+        #
+        #     if 'HS_Strong' in full:
+        #         if int(full['HS_Strong']) >= 1:
+        #             abuse.is_HS_Strong += 1
+        #
+        # abuse.save()
 
     elif word_type == 2:
         # alay
@@ -189,6 +235,42 @@ def alay_abusive_log_save(text, clean, word_type, text_id):
     else:
         # mixed
         word_string = AlayAbusiveLog.foul_type_mixed()
-
+        # abuse = Abusive.query.filter(Abusive.word == clean).first()
+        # if abuse:
+        #     if 'HS_Individual' in full:
+        #         if int(full['HS_Individual']) >= 1:
+        #             abuse.is_HS_Individual += 1
+        #     if 'HS_Group' in full:
+        #         if int(full['HS_Group']) >= 1:
+        #             abuse.is_HS_Group += 1
+        #     if 'HS_Religion' in full:
+        #         if int(full['HS_Religion']) >= 1:
+        #             abuse.is_HS_Religion += 1
+        #     if 'HS_Race' in full:
+        #         if int(full['HS_Race']) >= 1:
+        #             abuse.is_HS_Race += 1
+        #     if 'HS_Physical' in full:
+        #         if int(full['HS_Physical']) >= 1:
+        #             abuse.is_HS_Physical += 1
+        #     if 'HS_Gender' in full:
+        #         if int(full['HS_Gender']) >= 1:
+        #             abuse.is_HS_Gender += 1
+        #
+        #     if 'HS_Other' in full:
+        #         if int(full['HS_Other']) >= 1:
+        #             abuse.is_HS_Other += 1
+        #     if 'HS_Weak' in full:
+        #         if int(full['HS_Weak']) >= 1:
+        #             abuse.is_HS_Weak += 1
+        #     if 'HS_Moderate' in full:
+        #         if int(full['HS_Moderate']) >= 1:
+        #             abuse.is_HS_Moderate += 1
+        #
+        #     if 'HS_Strong' in full:
+        #         if int(full['HS_Strong']) >= 1:
+        #             abuse.is_HS_Strong += 1
+        #
+        # abuse.save()
+    # masukkan kalimat bertipe alay, abuse atau keduanya dalam log
     new_log = AlayAbusiveLog(word=text, clean=clean, foul_type=word_string, log_id=text_id)
     new_log.save()

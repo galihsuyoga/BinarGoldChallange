@@ -20,15 +20,15 @@ from main.model import db
 gold = Blueprint('gold', __name__, template_folder='templates', static_folder='assets')
 
 
-@swag_from("docs/hello_swagger.yml", methods=['GET'])
-@gold.route('/hello-swagger', methods=['GET'])
-def gold_hello_swagger():
-    json_response = {
-        'status_code': 200,
-        'description': "Menyapa hallo Swagger",
-        'data': "Hallo Swagger"
-    }
-    return jsonify(json_response)
+# @swag_from("docs/hello_swagger.yml", methods=['GET'])
+# @gold.route('/hello-swagger', methods=['GET'])
+# def gold_hello_swagger():
+#     json_response = {
+#         'status_code': 200,
+#         'description': "Menyapa hallo Swagger",
+#         'data': "Hallo Swagger"
+#     }
+#     return jsonify(json_response)
 
 
 @swag_from("docs/text_processing.yml", methods=['POST'])
