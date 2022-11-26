@@ -69,27 +69,23 @@ def gold_text_processing_from_file():
             """masukkan csv ke panda dataframe variabel data_frame"""
 
             data_frame = pd.read_csv(file.stream, encoding='latin-1')
-            # for data in data_frame:
-            # print(data_frame['Abusive'])
-            # data_frame.to_sql('kamus_alay', con=db.engine, if_exists='replace', index_label='id')
+
+            # data_frame.to_sql('file_text_log', con=db.engine, if_exists='replace', index_label='id')
+            # print("data saved")
             # print(data_frame)
+            # query all abusive word to become dataframe
             abusive_df = pd.read_sql_query(
                 sql=db.select([Abusive.word]),
                 con=db.engine
             )
+            # query all alay word to become dataframe
             alay_df = pd.read_sql_query(
                 sql=db.select([KamusAlay.word, KamusAlay.meaning]),
                 con=db.engine
             )
+
             for index, row in data_frame.iterrows():
 
-                # existing = TextFileTweetLog.query.filter(TextFileTweetLog.tweet == text).first()
-                # print(row.to_dict())
-                # if existing is None:
-                #     new_Tweet = TextFileTweetLog(tweet=text)
-                #     new_Tweet.save()
-                # print(text)
-                # print()
                 array_text.append(bersihkan_tweet_dari_file(tweet=str(row['Tweet']), df_abusive=abusive_df,
                                                             df_alay=alay_df, full=row.to_dict()))
     else:

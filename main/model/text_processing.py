@@ -85,7 +85,7 @@ class TextLog(db.Model):
         self.clean = clean
 
     def __repr__(self):
-        return '<TextFileTweetLog %r>' % self.raw_text
+        return '<TextLog %r>' % self.raw_text
 
     def save(self):
         try:
@@ -95,7 +95,6 @@ class TextLog(db.Model):
         except:
             db.session.rollback()
             raise
-
 
 class AlayAbusiveLog(db.Model):
     __tablename__ = 'alay_abusive_log'
@@ -118,6 +117,101 @@ class AlayAbusiveLog(db.Model):
 
     def __repr__(self):
         return '<TextFileTweetLog %r>' % self.word
+
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.flush()
+            db.session.commit()
+        except:
+            db.session.rollback()
+            raise
+
+    @classmethod
+    def foul_type_abusive(cls):
+        return cls.__foul_type_abusive
+
+    @classmethod
+    def foul_type_alay(cls):
+        return cls.__foul_type_alay
+
+    @classmethod
+    def foul_type_mixed(cls):
+        return cls.__foul_type_mixed
+
+class FileTextLog(db.Model):
+    __tablename__ = 'file_upload_text_log'
+
+    ID = db.Column(db.Integer().with_variant(db.Integer, "sqlite"), primary_key=True, nullable=False, index=True, autoincrement=True)
+    Tweet = db.Column(db.String(255), nullable=False, index=True, default="")
+    Clean = db.Column(db.String(255), nullable=False, default="")
+    HS = db.Column(db.SmallInteger, default=0)
+    Abusive = db.Column(db.SmallInteger, default=0)
+    HS_Individual = db.Column(db.SmallInteger, default=0)
+    HS_Group = db.Column(db.SmallInteger, default=0)
+    HS_Religion = db.Column(db.SmallInteger, default=0)
+    HS_Race = db.Column(db.SmallInteger, default=0)
+    HS_Physical = db.Column(db.SmallInteger, default=0)
+    HS_Gender = db.Column(db.SmallInteger, default=0)
+    HS_Other = db.Column(db.SmallInteger, default=0)
+    HS_Weak = db.Column(db.SmallInteger, default=0)
+    HS_Moderate = db.Column(db.SmallInteger, default=0)
+    HS_Strong = db.Column(db.SmallInteger, default=0)
+
+    def __init__(self, text, clean, full):
+        self.Tweet = text
+        self.Clean = clean
+        self.HS = int(full['HS']) if 'HS' in full else 0
+
+        self.Abusive = int(full['Abusive']) if 'Abusive' in full else 0
+
+        self.HS_Individual = int(full['HS_Individual']) if 'HS_Individual' in full else 0
+
+        self.HS_Group = int(full['HS_Group']) if 'HS_Group' in full else 0
+        self.HS_Religion = int(full['HS_Religion']) if 'HS_Religion' in full else 0
+        self.HS_Race = int(full['HS_Race']) if 'HS_Race' in full else 0
+        self.HS_Physical = int(full['HS_Physical']) if 'HS_Physical' in full else 0
+        self.HS_Gender = int(full['HS_Gender']) if 'HS_Gender' in full else 0
+        self.HS_Other = int(full['HS_Other']) if 'HS_Other' in full else 0
+        self.HS_Weak = int(full['HS_Weak']) if 'HS_Weak' in full else 0
+        self.HS_Moderate = int(full['HS_Moderate']) if 'HS_Moderate' in full else 0
+        self.HS_Strong = int(full['HS_Strong']) if 'HS_Strong' in full else 0
+
+    def __repr__(self):
+        return '<FileTextLog %r>' % self.Tweet
+
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.flush()
+            db.session.commit()
+        except:
+            db.session.rollback()
+            raise
+
+
+
+class AlayAbusiveFileLog(db.Model):
+    __tablename__ = 'alay_abusive_file_log'
+
+    id = db.Column(db.Integer().with_variant(db.Integer, "sqlite"), nullable=False, autoincrement=True)
+    word = db.Column(db.String(31), primary_key=True, nullable=False, index=True, default="")
+    clean = db.Column(db.String(31), primary_key=True, nullable=False, index=True, default="")
+    foul_type = db.Column(db.String(255), nullable=False, default="")
+    file_upload_text_log_id = db.Column(db.Integer, nullable=False, index=True, default="")
+
+    __foul_type_abusive = "ABUSE"
+    __foul_type_alay = "ALAY"
+    __foul_type_mixed = "MIXED"
+
+    def __init__(self, word, clean, foul_type, log_id):
+        self.word = word
+        self.clean = clean
+        self.foul_type = foul_type
+        self.text_log_id = log_id
+
+    def __repr__(self):
+        return '<AlayAbusiveFileLog %r>' % self.word
 
     def save(self):
         try:

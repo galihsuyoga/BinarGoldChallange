@@ -1,6 +1,6 @@
 __author__ = 'GalihSuyoga'
 
-from main.model.text_processing import Abusive, KamusAlay, TextLog, AlayAbusiveLog
+from main.model.text_processing import Abusive, KamusAlay, TextLog, AlayAbusiveLog, FileTextLog, AlayAbusiveFileLog
 import numpy as np
 import re
 
@@ -50,15 +50,21 @@ def bersihkan_tweet_dari_file(tweet, df_alay, df_abusive, full):
     #unjoin karakter untuk nantinya dijoin agar single spasi
     temparray = temp.split()
     filtered_tweet = []
-    new_text = TextLog(text=tweet, clean=temp)
-    new_text.save()
-    for w in temparray:
-        if w not in emoticons and w.upper() not in emoticons:
-            # cek pake filter pandas
-            filtered_tweet.append(cek_alay_dan_abuse(w, df_alay=df_alay, df_abuse=df_abusive, text_id=new_text.id, full=full))
-    temp = " ".join(word for word in filtered_tweet)
-    new_text.clean = temp
-    new_text.save()
+    # search for duplicate tweet
+    duplicate = FileTextLog.query.filter(FileTextLog.Tweet == tweet).first()
+    if duplicate is None:
+        new_text = FileTextLog(text=tweet, clean=temp, full=full)
+        new_text.save()
+        for w in temparray:
+            if w not in emoticons and w.upper() not in emoticons:
+                # cek pake filter pandas
+                filtered_tweet.append(cek_alay_dan_abuse(w, df_alay=df_alay, df_abuse=df_abusive, text_id=new_text.ID, full=full))
+        temp = " ".join(word for word in filtered_tweet)
+        new_text.clean = temp
+        new_text.save()
+    else:
+        # if duplicate then return the cleaned one
+        return duplicate.Clean
     return temp
 
 
@@ -192,42 +198,6 @@ def alay_abusive_log_save(text, clean, word_type, text_id, full):
     if word_type == 1:
         # abusive
         word_string = AlayAbusiveLog.foul_type_abusive()
-        # abuse = Abusive.query.filter(Abusive.word == clean).first()
-        # if abuse:
-        #     if 'HS_Individual' in full:
-        #         if int(full['HS_Individual']) >= 1:
-        #             abuse.is_HS_Individual += 1
-        #     if 'HS_Group' in full:
-        #         if int(full['HS_Group']) >= 1:
-        #             abuse.is_HS_Group += 1
-        #     if 'HS_Religion' in full:
-        #         if int(full['HS_Religion']) >= 1:
-        #             abuse.is_HS_Religion += 1
-        #     if 'HS_Race' in full:
-        #         if int(full['HS_Race']) >= 1:
-        #             abuse.is_HS_Race += 1
-        #     if 'HS_Physical' in full:
-        #         if int(full['HS_Physical']) >= 1:
-        #             abuse.is_HS_Physical += 1
-        #     if 'HS_Gender' in full:
-        #         if int(full['HS_Gender']) >= 1:
-        #             abuse.is_HS_Gender += 1
-        #
-        #     if 'HS_Other' in full:
-        #         if int(full['HS_Other']) >= 1:
-        #             abuse.is_HS_Other += 1
-        #     if 'HS_Weak' in full:
-        #         if int(full['HS_Weak']) >= 1:
-        #             abuse.is_HS_Weak += 1
-        #     if 'HS_Moderate' in full:
-        #         if int(full['HS_Moderate']) >= 1:
-        #             abuse.is_HS_Moderate += 1
-        #
-        #     if 'HS_Strong' in full:
-        #         if int(full['HS_Strong']) >= 1:
-        #             abuse.is_HS_Strong += 1
-        #
-        # abuse.save()
 
     elif word_type == 2:
         # alay
@@ -236,41 +206,11 @@ def alay_abusive_log_save(text, clean, word_type, text_id, full):
         # mixed
         word_string = AlayAbusiveLog.foul_type_mixed()
         # abuse = Abusive.query.filter(Abusive.word == clean).first()
-        # if abuse:
-        #     if 'HS_Individual' in full:
-        #         if int(full['HS_Individual']) >= 1:
-        #             abuse.is_HS_Individual += 1
-        #     if 'HS_Group' in full:
-        #         if int(full['HS_Group']) >= 1:
-        #             abuse.is_HS_Group += 1
-        #     if 'HS_Religion' in full:
-        #         if int(full['HS_Religion']) >= 1:
-        #             abuse.is_HS_Religion += 1
-        #     if 'HS_Race' in full:
-        #         if int(full['HS_Race']) >= 1:
-        #             abuse.is_HS_Race += 1
-        #     if 'HS_Physical' in full:
-        #         if int(full['HS_Physical']) >= 1:
-        #             abuse.is_HS_Physical += 1
-        #     if 'HS_Gender' in full:
-        #         if int(full['HS_Gender']) >= 1:
-        #             abuse.is_HS_Gender += 1
-        #
-        #     if 'HS_Other' in full:
-        #         if int(full['HS_Other']) >= 1:
-        #             abuse.is_HS_Other += 1
-        #     if 'HS_Weak' in full:
-        #         if int(full['HS_Weak']) >= 1:
-        #             abuse.is_HS_Weak += 1
-        #     if 'HS_Moderate' in full:
-        #         if int(full['HS_Moderate']) >= 1:
-        #             abuse.is_HS_Moderate += 1
-        #
-        #     if 'HS_Strong' in full:
-        #         if int(full['HS_Strong']) >= 1:
-        #             abuse.is_HS_Strong += 1
-        #
-        # abuse.save()
+
     # masukkan kalimat bertipe alay, abuse atau keduanya dalam log
-    new_log = AlayAbusiveLog(word=text, clean=clean, foul_type=word_string, log_id=text_id)
-    new_log.save()
+    if "Abusive" in full:
+        new_log = AlayAbusiveFileLog(word=text, clean=clean, foul_type=word_string, log_id=text_id)
+        new_log.save()
+    else:
+        new_log = AlayAbusiveLog(word=text, clean=clean, foul_type=word_string, log_id=text_id)
+        new_log.save()
