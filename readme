@@ -1,0 +1,7 @@
+Create virtualenv with python 3.9 above
+activate virtualenv
+
+install requirements from requirements.txt.
+
+run
+python gold.py
