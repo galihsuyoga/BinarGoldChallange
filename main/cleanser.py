@@ -50,21 +50,24 @@ def bersihkan_tweet_dari_file(tweet, df_alay, df_abusive, full):
     #unjoin karakter untuk nantinya dijoin agar single spasi
     temparray = temp.split()
     filtered_tweet = []
-    # search for duplicate tweet
+    # search for duplicate tweet. duplicate text input is still processed coz we didn't know if there is added knowledge
+    # abusive or alay
     duplicate = FileTextLog.query.filter(FileTextLog.Tweet == tweet).first()
     if duplicate is None:
         new_text = FileTextLog(text=tweet, clean=temp, full=full)
         new_text.save()
-        for w in temparray:
-            if w not in emoticons and w.upper() not in emoticons:
-                # cek pake filter pandas
-                filtered_tweet.append(cek_alay_dan_abuse(w, df_alay=df_alay, df_abuse=df_abusive, text_id=new_text.ID, full=full))
-        temp = " ".join(word for word in filtered_tweet)
-        new_text.clean = temp
-        new_text.save()
     else:
-        # if duplicate then return the cleaned one
-        return duplicate.Clean
+        new_text = duplicate
+
+    for w in temparray:
+        if w not in emoticons and w.upper() not in emoticons:
+            # cek pake filter pandas
+            filtered_tweet.append(cek_alay_dan_abuse(w, df_alay=df_alay, df_abuse=df_abusive, text_id=new_text.ID,
+                                                     full=full))
+    temp = " ".join(word for word in filtered_tweet)
+    new_text.Clean = temp
+    new_text.save()
+
     return temp
 
 
@@ -209,8 +212,11 @@ def alay_abusive_log_save(text, clean, word_type, text_id, full):
 
     # masukkan kalimat bertipe alay, abuse atau keduanya dalam log
     if "Abusive" in full:
-        new_log = AlayAbusiveFileLog(word=text, clean=clean, foul_type=word_string, log_id=text_id)
-        new_log.save()
+
+        exist = AlayAbusiveFileLog.query.filter(AlayAbusiveFileLog.id == text_id, AlayAbusiveFileLog.word==word_string).first()
+        if exist is None:
+            new_log = AlayAbusiveFileLog(word=text, clean=clean, foul_type=word_string, log_id=text_id)
+            new_log.save()
     else:
         new_log = AlayAbusiveLog(word=text, clean=clean, foul_type=word_string, log_id=text_id)
         new_log.save()

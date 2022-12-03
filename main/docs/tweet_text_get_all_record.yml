@@ -1,0 +1,21 @@
+tags:
+  - name: Get All Recorded text and cleaned text
+get:
+  description: Get all cleansing history from file. no duplicate value is added. same tweet only count 1 time.
+
+
+
+post:
+  description: Query cleansing history
+  parameters:
+    - name: query
+      in: formData
+      required: true
+      type: string
+responses:
+  '200':
+    description: Successful response
+  '400':
+    description: Bad Request
+  '500':
+    description: Internal Server Error

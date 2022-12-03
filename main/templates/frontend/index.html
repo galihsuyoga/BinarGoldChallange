@@ -61,7 +61,6 @@
         <ul>
           <li><a href="#hero" class="nav-link scrollto active"><i class="bx bx-home"></i> <span>Home</span></a></li>
           <li><a href="#binar_gold_challenge" class="nav-link scrollto"><i class="bx bx-user"></i> <span>Binar Gold Challenge</span></a></li>
-          <li><a href="#binar_platinum_challenge" class="nav-link scrollto"><i class="bx bx-user"></i> <span>Binar Platinum Challenge</span></a></li>
 
         </ul>
       </nav><!-- .nav-menu -->
@@ -72,7 +71,7 @@
   <section id="hero" class="d-flex flex-column justify-content-center align-items-center">
     <div class="hero-container" data-aos="fade-in">
       <h1>Galih Suyoga</h1>
-      <p><span class="typed" data-typed-items="EAT, SLEEP, CODE"></span></p>
+      <p><span class="typed" data-typed-items="EAT, SLEEP"></span></p>
     </div>
   </section><!-- End Hero -->
 
@@ -103,29 +102,47 @@ Kamu harus membuat endpoint yang bisa menerima input user berupa text dan file. 
 
         <div class="row">
           <div class="col-lg-4" data-aos="fade-right">
-            <h1><a href="{{url_for('front.gold_index')}}">API Documentation [Swagger UI]</a></h1>
+            <h1><a target="_blank" href="{{url_for('front.gold_index')}}">API Documentation [Swagger UI]</a></h1>
           </div>
           <div class="col-lg-8 pt-4 pt-lg-0 content" align="right" data-aos="fade-left">
-           <h1><a href="">Analysis report</a></h1>
+           <h1>Analysis report</h1>
+
+          <ol>
+          <li><a target="_blank" href="{{url_for('front.gold_analysis', type=2)}}" >Most Frequent Abusive Word</a></li>
+          <li><a target="_blank" href="{{url_for('front.gold_analysis', type=1)}}" >Normalize length of word from tweet Distribution Plot</a></li>
+          <li><a target="_blank" href="{{url_for('front.gold_analysis', type=3)}}" >Most Frequent Hate speech Category</a></li>
+          <li>
+            <iframe src="https://drive.google.com/file/d/1O2KM3BIVzszIcVnFnney8-ye3yyARXX0/preview" width="640" height="480" allow="autoplay"></iframe>
+
+          </li>
+            </ol>
           </div>
         </div>
 
+        <br>
+        <div class="section-title">
+
+
+        </div>
       </div>
     </section><!-- End Gold Section -->
 
-<!-- ======= Platinum Section ======= -->
-    <section id="binar_platinum_challenge" class="about">
-      <div class="container">
+<!-- ======= analysis_plot Section ======= -->
+<!--    <section id="analysis_plot" class="about">-->
+<!--      <div class="container">-->
 
-        <div class="section-title">
-          <h2>Binar Platinum Challenge</h2>
-          <p>Selesaikan Dahulu challenge yang Gold</p>
-        </div>
+<!--        <div class="section-title">-->
+<!--          <h2>Analysis Plot</h2>-->
+<!--          <ol>-->
+<!--          <li><a target="_blank" href="{{url_for('front.gold_analysis', type=1)}}" >Most Frequent Abusive Word</a></li>-->
+
+<!--            </ol>-->
+<!--        </div>-->
 
 
 
-      </div>
-    </section><!-- End Platinum Section -->
+<!--      </div>-->
+<!--    </section>&lt;!&ndash; End Platinum Section &ndash;&gt;-->
 
   </main><!-- End #main -->
 

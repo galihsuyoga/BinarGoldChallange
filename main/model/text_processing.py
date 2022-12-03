@@ -208,7 +208,7 @@ class AlayAbusiveFileLog(db.Model):
         self.word = word
         self.clean = clean
         self.foul_type = foul_type
-        self.text_log_id = log_id
+        self.file_upload_text_log_id = log_id
 
     def __repr__(self):
         return '<AlayAbusiveFileLog %r>' % self.word
