@@ -1,0 +1,77 @@
+commit 6ff67b776d37ecfe05a3b7932d52daeb3f5e944b
+Author: galih suyoga <galih@7langit.com>
+Date:   Sat Dec 3 21:39:30 2022 +0700
+
+    report seadanya
+
+commit 17cb57d75f7d3bdf4f32d13a5fc2b0cc0a4ad8d1
+Author: galih suyoga <galih@7langit.com>
+Date:   Sat Nov 26 20:22:53 2022 +0700
+
+    separating log for tweet upload and text input
+
+commit 6f3f35d6c71610a02c2e8265618a8f01cd7992c5
+Author: galih suyoga <galih@7langit.com>
+Date:   Sat Nov 26 17:11:01 2022 +0700
+
+    remove overcomplicated and overthink logic. be simple
+
+commit 905f464ec533e2fadb90de20fc1adea7a29fc2e1
+Author: galih suyoga <galih@7langit.com>
+Date:   Thu Nov 17 10:33:04 2022 +0700
+
+    query all data and text related
+
+commit af95042365a1de6c9c79365fda259e26f9bc2b04
+Author: galih suyoga <galih@7langit.com>
+Date:   Sun Nov 13 11:12:02 2022 +0700
+
+    api for adding alay and abusive word
+
+commit 360b14da2247f546f43ca1d3db42a03c2ab246bd
+Author: galih suyoga <galih@7langit.com>
+Date:   Sat Nov 12 23:18:28 2022 +0700
+
+    basic finish
+
+commit 6e4cd22c2538e81e330e8cc7cc2d95844bedfc2d
+Author: galih suyoga <galih@7langit.com>
+Date:   Fri Nov 11 10:16:24 2022 +0700
+
+    rangka
+
+commit e8ac0fbdae00586586892196589a951f9838111f
+Author: galih suyoga <galih@7langit.com>
+Date:   Mon Nov 7 11:53:31 2022 +0700
+
+    requirements
+
+commit 9541975681272dd0aa521dd3e4b628891a791d96
+Author: galih suyoga <galih@7langit.com>
+Date:   Mon Nov 7 11:48:22 2022 +0700
+
+    text highlight
+
+commit aefa30ed3f612ebe454e87902bcc4eb7bbae0e2c
+Author: galih suyoga <galih@7langit.com>
+Date:   Sun Nov 6 21:40:51 2022 +0700
+
+    files input for swagger and csv file validation
+
+commit 028d4016d699f6b5d7aebeadef2c8290c72bd639
+Author: galih suyoga <galih@7langit.com>
+Date:   Sun Nov 6 19:06:49 2022 +0700
+
+    flask swagger ui working
+
+commit 7ad5489a7279bf374e616766d50535a9495dd3c6
+Author: galih suyoga <galih@7langit.com>
+Date:   Fri Nov 4 08:46:57 2022 +0700
+
+    gitignore
+
+commit 930d869789380ff8909ddd6057f45c244002e830
+Author: galihsuyoga <63764665+galihsuyoga@users.noreply.github.com>
+Date:   Fri Nov 4 08:40:21 2022 +0700
+
+    Initial commit
